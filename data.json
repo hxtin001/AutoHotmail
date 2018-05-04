@@ -1,0 +1,27 @@
+{
+  "CONFIG": [
+    {
+
+      "USER_AGENT": "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)",
+      "ALTERNATIVE_LOGIN_SERVICE": "https://accounts.google.com/ServiceLogin"
+    }
+  ],
+  "TESTS": [
+    {
+      "CASE_ID": "001",
+      "FIRST_NAME": "Thinh",
+      "LAST_NAME": "Nguyen",
+      "USER_NAME": ["nguyenthinh2000", "nguyenthinh2001", "nguyenthinh2002", "nguyenthinh2003", "nguyenthinh2004"],
+      "DOMAIN": "hotmail.com",
+      "PASSWORD": "phamton123*",
+      "TELEPHONE_NUMBER": "01655584655",
+      "COUNTRY_CODE": "VN",
+      "ZIP_CODE": 700000,
+      "BIRTH_MONTH": 1,
+      "BIRTH_DAY": 2,
+      "BIRTH_YEAR": 1993,
+      "GENDER": "Male",
+      "ALTERNATIVE_EMAIL": "quocton06@gmail.com"
+    }
+  ]
+}
