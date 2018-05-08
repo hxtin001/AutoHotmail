@@ -4,16 +4,14 @@ import geb.driver.CachingDriverFactory
 import org.openqa.selenium.WebDriverException
 import spock.lang.*
 
-import javax.imageio.ImageIO
-import java.awt.image.BufferedImage
-
-
 @Log4j
 class HotmailSpec extends GebReportingSpec {
 
 
     @Shared
             jutils = new JSONUtils()
+    @Shared
+            mailReader = new MailReader()
 
     def setup() {
         CachingDriverFactory.clearCache()
@@ -31,6 +29,16 @@ class HotmailSpec extends GebReportingSpec {
     "Hotmail register"() {
 
         log.info("---------------------------------------CASE_ID: ${caseId}-----------------------------------------------")
+        ArrayList<String> mail1 = mailReader.getMails(jutils.getConfig("MAIL_PATH_1"))
+        ArrayList<String> mail2 = mailReader.getMails(jutils.getConfig("MAIL_PATH_2"))
+        if (mail1.size() <= 0) {
+            log.error("Please check list1mail.txt")
+            assert false
+        }
+        if (mail2.size() <= 0) {
+            log.error("Please check list2mail.txt")
+            assert false
+        }
 
         driver.switchTo().defaultContent()
         when:
@@ -39,10 +47,10 @@ class HotmailSpec extends GebReportingSpec {
         Utils.screenshotFullPage(driver, "1.Input_info_before", caseId)
 
         then: "Input first name"
-        Utils.selectByValue(firstName, firstNameValue, "First name")
+        Utils.selectByValue(firstName, Utils.getNameRandom(), "First name")
 
         then: "Input last name"
-        Utils.selectByValue(lastName, lastNameValue, "Last name")
+        Utils.selectByValue(lastName, Utils.getNameRandom(), "Last name")
 
         then: "Click new mail"
         Utils.clickElement(newMail, "Clicked new mail", true)
@@ -52,7 +60,7 @@ class HotmailSpec extends GebReportingSpec {
         Utils.selectByValue(domain, domainValue, "Selected domain")
 
         then: "Input user name"
-        Utils.selectByValue(username, usernameValues[0], "User name")
+        Utils.selectByValue(username, mail1.get(0).split("@")[0], "User name")
 
         then: "Input password"
         Utils.selectByValue(passwd, passwordValue, "Password")
@@ -65,8 +73,8 @@ class HotmailSpec extends GebReportingSpec {
         if (errMsg != null) {
             log.warn(errMsg)
             int i = 1
-            while ((errMsg.contains("already")) && (i <= usernameValues.size())) {
-                Utils.selectByValue(username, usernameValues[i], "Try username")
+            while ((errMsg.contains("already")) && (i < mail1.size())) {
+                Utils.selectByValue(username, mail1.get(i).split("@")[0], "Try username")
                 Utils.clickElement(firstName, "", true)
                 Thread.sleep(3000)
                 errMsg = $("#iMembernameLiveError").text()
@@ -83,13 +91,13 @@ class HotmailSpec extends GebReportingSpec {
         Utils.selectByValue(zipCode, zipCodeValue, "Zip code")
 
         then: "Select birth month"
-        Utils.selectByValue(birthMonth, birthMonthValue, "Birth month")
+        Utils.selectByValue(birthMonth, "${Utils.randomInt(11, 1)}", "Birth month")
 
         then: "Select birth day"
-        Utils.selectByValue(birthDay, birthDayValue, "Birth day")
+        Utils.selectByValue(birthDay, "${Utils.randomInt(28, 1)}", "Birth day")
 
         then: "Select birth year"
-        Utils.selectByValue(birthYear, birthYearValue, "Birth year")
+        Utils.selectByValue(birthYear, "${Utils.randomInt(1999, 1985)}", "Birth year")
 
         then: "Select gender"
         Utils.selectByValue(gender, genderValue, "Gender")
@@ -101,56 +109,28 @@ class HotmailSpec extends GebReportingSpec {
 //        Utils.selectByValue(phoneNo, telephoneNoValue, "Phone number")
 
         then: "Input alternative email"
-        Utils.selectByValue(altEmail, altEmailValue, "Alternative email")
+        Utils.selectByValue(altEmail, mail2.get(Utils.randomInt(mail2.size() - 1, 0)), "Alternative email")
 
-        reportGroup("ABC")
-        report("abcd")
+        browser.report("captcha")
+        Utils.cropImage(jutils.getConfig("CAPTCHA_LOCATION"))
 
         then: "Input captcha"
-        Utils.selectByValue(captcha, "1234", "")
+        Utils.selectByValue(captcha, Utils.getCaptchaText(), "")
         Utils.screenshotFullPage(driver, "2.Input_info_after", caseId)
-        Thread.sleep(1000000)
 
         then: "Click submit button"
         Utils.clickElement(submitBtn, "Clicked submit button", true)
+        Thread.sleep(30000)
 
-        Thread.sleep(3000)
-        driver.get("https://login.live.com/login.srf")
-        Thread.sleep(5000)
-
-        // Go to email to verify
-        driver.get(altLoginService)
-        when: "At host mail login page"
-        at GmailLoginPage
-        Utils.screenshotFullPage(driver, "3.Hostmail_login_page", caseId)
-        log.info("At login page")
-
-        then: "Input username"
-        Utils.selectByValue(username, altEmailValue, "Gmail username")
-
-        then: "Input password"
-        Utils.selectByValue(password, passwordValue, "Gmail password")
-
-        then: "Click login button"
-        Utils.clickElement(next, "Clicked next button", true)
-        Thread.sleep(5000)
-
+        {Utils.getCookiesAsString(browser)}
+        cleanup()
         where:
             caseId << jutils.get("CASE_ID")
-            firstNameValue << jutils.get("FIRST_NAME")
-            lastNameValue << jutils.get("LAST_NAME")
-            usernameValues << jutils.get("USER_NAME")
             domainValue << jutils.get("DOMAIN")
             passwordValue << jutils.get("PASSWORD")
-            telephoneNoValue << jutils.get("TELEPHONE_NUMBER")
             countryCodeValue << jutils.get("COUNTRY_CODE")
             zipCodeValue << jutils.get("ZIP_CODE")
             genderValue << jutils.get("GENDER")
-            birthMonthValue << jutils.get("BIRTH_MONTH")
-            birthDayValue << jutils.get("BIRTH_DAY")
-            birthYearValue << jutils.get("BIRTH_YEAR")
-            altEmailValue << jutils.get("ALTERNATIVE_EMAIL")
-            altLoginService << jutils.get("ALTERNATIVE_LOGIN_SERVICE")
     }
 
 }

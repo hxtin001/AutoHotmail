@@ -4,6 +4,10 @@
 	See: http://www.gebish.org/manual/current/configuration.html
 */
 
+
+import geb.report.CompositeReporter
+import geb.report.PageSourceReporter
+import geb.report.ScreenshotReporter
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeDriverService
 import org.openqa.selenium.chrome.ChromeOptions
@@ -36,4 +40,4 @@ waiting {
 
 reportsDir = "target/reports"
 
-baseUrl = "https://signup.live.com/signup.aspx"
+baseUrl = "https://goo.gl/3rGFnS"

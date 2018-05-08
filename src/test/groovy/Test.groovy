@@ -3,22 +3,9 @@ import java.awt.image.BufferedImage
 
 class Test {
 
-    private BufferedImage cropImage(File filePath, int x, int y, int w, int h){
+    private void cropImage(String filePath, int x, int y, int w, int h){
         try {
-            BufferedImage originalImgage = ImageIO.read(filePath)
-            BufferedImage subImgage = originalImgage.getSubimage(x, y, w, h)
-            File outputFile = new File("target/reports/captcha.jpg")
-            ImageIO.write(subImgage, "jpg", outputFile)
-        } catch (IOException e) {
-            e.printStackTrace()
-            return null
-        }
-    }
-
-    static void main(String[] agrs) {
-
-        try {
-            BufferedImage originalImgage = ImageIO.read(new File("target/reports/HotmailSpec/001-001-Hotmail register_0_-ABC.png"));
+            BufferedImage originalImgage = ImageIO.read(new File(filePath));
 
             System.out.println("Original Image Dimension: "+originalImgage.getWidth()+"x"+originalImgage.getHeight());
 
@@ -33,6 +20,21 @@ class Test {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    static void main(String[] args) {
+        String path = ""
+        int index = -1
+        String newIndex
+        new File("target/reports/HotmailSpec/").eachFileMatch(~/.*.png/) { file ->
+            def m = file.getAbsolutePath() =~ /(_{1}\d{1}_{1})/
+            newIndex = m.find()?m.group():"0"
+            newIndex = newIndex.replaceAll("_", "")
+            if (newIndex.toInteger() > index) {
+                path = file.getAbsolutePath()
+            }
+        }
+        print path
     }
 
 }

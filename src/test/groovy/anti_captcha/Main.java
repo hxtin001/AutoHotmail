@@ -14,7 +14,7 @@ public class Main {
 
         ImageToText api = new ImageToText();
         api.setClientKey("f8228269a43caf2e25ebfafef82515dd");
-        api.setFilePath("captcha3.png");
+        api.setFilePath("captcha.png");
 
         if (!api.createTask()) {
             DebugHelper.out(

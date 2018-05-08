@@ -1,7 +1,15 @@
+import anti_captcha.Api.ImageToText
+import anti_captcha.Helper.DebugHelper
+import geb.Browser
 import geb.error.GebException
+import groovy.json.JsonOutput
 import groovy.util.logging.Log4j
+import org.openqa.selenium.Cookie
 import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.chrome.ChromeDriver
+
+import javax.imageio.ImageIO
+import java.awt.image.BufferedImage
 import java.util.zip.ZipEntry
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
@@ -11,6 +19,21 @@ class Utils {
 
     private static final String DESTINATION_FOLDER = "target/reports/HotmailSpec/"
     private static final String HTML2CAVAS_PATH = "libs/html2canvas.js"
+    static final String CAPTCHA_FOLDER = "target/reports/HotmailSpec"
+    static final String CAPTCHA = "/captcha.png"
+    static final NAME_LIST = ["NGUYEN", "TRAN", "LE",
+                              "HUYNH", "DUONG", "NGO",
+                              "JOHN", "Mc", "HO", "PHAM",
+                              "TRUONG", "LY", "LE", "TONG",
+                              "DUYEN", "KIEN", "KIENG", "BIEN",
+                              "LONG", "YAMADA", "YAMAGUCHI",
+                              "MINA", "MINI", "MIMI", "SATOSHI",
+                              "KIMI", "SHISHI", "YAMATO", "HONDA",
+                              "SUZUKI", "ABBEY", "ABERFA",
+                              "ABILENE", "ABOLI", "ADELAIDE",
+                              "ADELE", "ADELIA", "AGATHA", "AGNES",
+                              "AKINA", "ALANA", "ALFRED",
+                              "ALICE", "ALIDA", "ALMA", "ALULA", "ALMAR"]
 
     static File getDriver()
             throws URISyntaxException, ZipException, IOException {
@@ -375,6 +398,99 @@ class Utils {
             log.error(e.getMessage())
         }
         return false
+    }
+
+    static void cropImage(captchaLocations){
+        try {
+            String captchaPath = getCaptchaPath(CAPTCHA_FOLDER)
+            log.info("Captcha path ${captchaPath}")
+            BufferedImage originalImgage = ImageIO.read(new File(captchaPath))
+            log.info("Original Image Dimension: ${originalImgage.getWidth()}  x ${originalImgage.getHeight()}")
+            BufferedImage SubImgage = originalImgage.getSubimage(captchaLocations.get(0), captchaLocations.get(1), captchaLocations.get(2), captchaLocations.get(3))
+            log.info("Cropped Image Dimension: ${SubImgage.getWidth()} x ${SubImgage.getHeight()}")
+
+            // Save image
+            File outputfile = new File(CAPTCHA_FOLDER + CAPTCHA)
+            ImageIO.write(SubImgage, "png", outputfile)
+            log.info("Image cropped successfully: ${outputfile.getPath()}")
+
+        } catch (IOException e) {
+            log.error("Can not crop captcha image", e)
+        } catch (Exception e) {
+            log.error("Can not crop captcha image", e)
+        }
+    }
+
+    static String getCaptchaPath(String folder) throws Exception {
+        String path = ""
+        int index = -1
+        String newIndex
+        try {
+            new File(folder).eachFileMatch(~/.*.png/) { file ->
+                def m = file.getAbsolutePath() =~ /(_{1}\d{1}_{1})/
+                newIndex = m.find() ? m.group() : "0"
+                newIndex = newIndex.replaceAll("_", "")
+                if (newIndex.toInteger() > index) {
+                    path = file.getAbsolutePath()
+                }
+            }
+            if (path.isEmpty()) {
+                log.error("Can not find captcha image")
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e)
+        }
+        return path
+    }
+
+    static String getCaptchaText() throws InterruptedException {
+        DebugHelper.setVerboseMode(true)
+
+        ImageToText api = new ImageToText();
+        api.setClientKey("f8228269a43caf2e25ebfafef82515dd")
+        api.setFilePath(CAPTCHA_FOLDER + CAPTCHA)
+
+        if (!api.createTask()) {
+            DebugHelper.out(
+                    "API v2 send failed. " + api.getErrorMessage(),
+                    DebugHelper.Type.ERROR
+            )
+        } else if (!api.waitForResult()) {
+            DebugHelper.out("Could not solve the captcha.", DebugHelper.Type.ERROR)
+        } else {
+            DebugHelper.out("Result: " + api.getTaskSolution().getText(), DebugHelper.Type.SUCCESS)
+            return api.getTaskSolution().getText()
+        }
+        return ""
+    }
+
+    static void getCookiesAsString(Browser browser, String delimiter = ",\n") {
+        Set<Cookie> cookies = browser.driver.manage().getCookies()
+        String cookiesStr = null
+        log.info("---------------Start Cookies---------------")
+        log.info(JsonOutput.toJson(cookies))
+//        if ( cookies ) {
+//            cookiesStr = cookies.collect { Cookie cookie -> "${cookie.name}:${cookie.value}" }.join(delimiter)
+//        }
+//        cookiesStr
+        log.info("----------------- Cookies-----------------")
+    }
+
+    /**
+     * Random between max and min
+     * @return a number between max and min
+     */
+    static int randomInt(int max, int min) {
+        return new Random().nextInt(max - min) + min
+    }
+
+    /**
+     * Get random name from NAME_LIST
+     * @return a name
+     */
+    static String getNameRandom() {
+        int randInt = randomInt(NAME_LIST.size() - 1, 0)
+        return NAME_LIST[randInt]
     }
 
 }
