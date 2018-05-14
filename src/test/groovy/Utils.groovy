@@ -4,7 +4,9 @@ import geb.Browser
 import geb.error.GebException
 import groovy.json.JsonOutput
 import groovy.util.logging.Log4j
+import org.apache.log4j.Logger
 import org.openqa.selenium.Cookie
+import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.chrome.ChromeDriver
 
@@ -354,52 +356,6 @@ class Utils {
         }
     }
 
-    /**
-     * wait until element is displayed
-     * @param driver
-     * @param timeOut
-     * @param strCheck
-     * @param jsScript Ex: '''return $('title').text();'''
-     * @return boolean
-     */
-    static boolean wait(ChromeDriver driver, int timeOut, String strCheck, String jsScript="") {
-        int twoSecond = 2000
-        String title = ""
-        try {
-            if (jsScript != null) {
-                if (jsScript.isEmpty()) {
-                    jsScript = '''return $('title').text();'''
-                }
-            }
-            Thread.sleep(twoSecond)
-            log.info("Waiting in ${timeOut}s ...")
-            while (timeOut > 0) {
-                title = driver.executeScript(jsScript)
-                if (title != null) {
-                    if (!title.isEmpty()) {
-                        if (strCheck == title || title.endsWith(strCheck) || title.contains(strCheck)) {
-                            log.info("Wait OK")
-                            return true
-                        }
-                    }
-                }
-                timeOut = timeOut - 1
-                Thread.sleep(twoSecond)
-            }
-            if (timeOut <= 0) {
-                log.info("Wait time out")
-                return false
-            }
-        } catch (AssertionError ae) {
-            log.error(ae.getMessage())
-        } catch (org.openqa.selenium.WebDriverException we) {
-            log.error("WebDriver exception.")
-        } catch (Exception e) {
-            log.error(e.getMessage())
-        }
-        return false
-    }
-
     static void cropImage(captchaLocations){
         try {
             String captchaPath = getCaptchaPath(CAPTCHA_FOLDER)
@@ -416,8 +372,10 @@ class Utils {
 
         } catch (IOException e) {
             log.error("Can not crop captcha image", e)
+            assert false
         } catch (Exception e) {
             log.error("Can not crop captcha image", e)
+            assert false
         }
     }
 
@@ -444,10 +402,11 @@ class Utils {
     }
 
     static String getCaptchaText() throws InterruptedException {
+        def jutils = new JSONUtils()
         DebugHelper.setVerboseMode(true)
 
-        ImageToText api = new ImageToText();
-        api.setClientKey("f8228269a43caf2e25ebfafef82515dd")
+        ImageToText api = new ImageToText()
+        api.setClientKey(jutils.getConfig("ANTI_CAPTCHA_KEY"))
         api.setFilePath(CAPTCHA_FOLDER + CAPTCHA)
 
         if (!api.createTask()) {
@@ -464,16 +423,9 @@ class Utils {
         return ""
     }
 
-    static void getCookiesAsString(Browser browser, String delimiter = ",\n") {
+    static String getCookiesAsString(Browser browser) {
         Set<Cookie> cookies = browser.driver.manage().getCookies()
-        String cookiesStr = null
-        log.info("---------------Start Cookies---------------")
-        log.info(JsonOutput.toJson(cookies))
-//        if ( cookies ) {
-//            cookiesStr = cookies.collect { Cookie cookie -> "${cookie.name}:${cookie.value}" }.join(delimiter)
-//        }
-//        cookiesStr
-        log.info("----------------- Cookies-----------------")
+        return JsonOutput.toJson(cookies)
     }
 
     /**
@@ -492,5 +444,28 @@ class Utils {
         int randInt = randomInt(NAME_LIST.size() - 1, 0)
         return NAME_LIST[randInt]
     }
+
+    static void execCmd(String cmd) {
+        try {
+            Runtime rt = Runtime.getRuntime()
+            Process pr = rt.exec(cmd)
+            BufferedReader input = new BufferedReader(new InputStreamReader(pr.getInputStream()))
+
+            String line = null
+
+            while((line = input.readLine()) != null) {
+                log.info(line)
+            }
+
+            int exitVal = pr.waitFor()
+            log.warn("Exited with error code ${exitVal}")
+
+        } catch(Exception e) {
+            log.error(e.getMessage(), e)
+        }
+    }
+
+
+
 
 }

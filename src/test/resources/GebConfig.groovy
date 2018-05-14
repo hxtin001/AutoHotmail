@@ -5,9 +5,6 @@
 */
 
 
-import geb.report.CompositeReporter
-import geb.report.PageSourceReporter
-import geb.report.ScreenshotReporter
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeDriverService
 import org.openqa.selenium.chrome.ChromeOptions
@@ -19,10 +16,11 @@ File findDriverExecutable() {
 driver = {
     def jutils = new JSONUtils()
     ChromeOptions options = new ChromeOptions()
+    options.addExtensions(new File("/home/hxtin001/tinhx/software/anti-captcha-extention/anticaptcha-plugin_v0.1807.crx"))
     options.addArguments("test-type")
     options.addArguments("start-maximized")
     options.addArguments("disable-infobars")
-    options.addArguments("--disable-extentions")
+    options.addArguments("--disable-web-security")
     options.addArguments("--user-agent=" + jutils.getConfig("USER_AGENT"))
     ChromeDriverService service = new ChromeDriverService.Builder()
             .usingAnyFreePort()
