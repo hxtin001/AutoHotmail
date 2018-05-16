@@ -7,7 +7,7 @@
       "MAIL_PATH_1": "list1mail.txt",
       "MAIL_PATH_2": "list2mail.txt",
       "SIGN_UP_WAIT": 40,
-      "ANTI_CAPTCHA_KEY": "f8228269a43caf2e25ebfafef82515dd"
+      "ANTI_CAPTCHA_KEY": ""
     }
   ],
   "TESTS": [
